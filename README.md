@@ -26,18 +26,21 @@ npm i solidity-patricia-tree
 ```
 
 ```solidity
+
 pragma solidity ^0.4.25;
 
 import {PatriciaTree} from "solidity-patricia-tree/contracts/tree.sol"; 
-contract YourContract {
-    using PatriciaTree for PatriciaTree.Tree;
 
-    function test() {
-        //testInsert();
+contract TestPatriciaTree {
+    using PatriciaTree for PatriciaTree.Tree;
+    PatriciaTree.Tree tree;
+
+    function test() public {
+        // testInsert();
         testProofs();
     }
+
     function testInsert() internal {
-        PatriciaTree.Tree memory tree;
         tree.insert("one", "ONE");
         tree.insert("two", "ONE");
         tree.insert("three", "ONE");
@@ -48,18 +51,18 @@ contract YourContract {
         // update
         tree.insert("one", "TWO");
     }
+
     function testProofs() internal {
-        PatriciaTree.Tree memory tree;
         tree.insert("one", "ONE");
         uint branchMask;
-        bytes32[] siblings;
+        bytes32[] memory siblings;
         (branchMask, siblings) = tree.getProof("one");
-        tree.verifyProof(root, "one", "ONE", branchMask, siblings);
+        PatriciaTree.verifyProof(tree.root, "one", "ONE", branchMask, siblings);
         tree.insert("two", "TWO");
         (branchMask, siblings) = tree.getProof("one");
-        tree.verifyProof(root, "one", "ONE", branchMask, siblings);
+        PatriciaTree.verifyProof(tree.root, "one", "ONE", branchMask, siblings);
         (branchMask, siblings) = tree.getProof("two");
-        tree.verifyProof(root, "two", "TWO", branchMask, siblings);
+        PatriciaTree.verifyProof(tree.root, "two", "TWO", branchMask, siblings);
     }
 }
 ```
