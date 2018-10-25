@@ -1,0 +1,63 @@
+language: node_js
+node_js:
+  - "stable"
+
+install:
+  - npm install -g truffle
+  - npm install -g ganache-cli
+  - npm install -g coveralls
+  - npm install
+
+script:
+  - npm run test
+
+after_success:
+  - export CURRENT_VERSION=$(node -p "require('./package.json').version")
+  - export LATEST=$(npm view $(node -p "require('./package.json').name") dist-tags.latest)
+  - export NEXT=$(npm view $(node -p "require('./package.json').name") dist-tags.next)
+  - npm run coverage && cat coverage/lcov.info | coveralls
+
+before_deploy:
+  - if [ "$LATEST" != "$CURRENT_VERSION" ] && [ "$TRAVIS_BRANCH" = "master" ]; then
+      echo "on master branch";
+      export TRAVIS_TAG=v$CURRENT_VERSION;
+    fi;
+  - if [ "$NEXT" != "$CURRENT_VERSION" ] && [ "$TRAVIS_BRANCH" = "develop" ]; then
+      echo "on develop branch";
+      export TRAVIS_TAG=v$CURRENT_VERSION-next;
+    fi;
+
+deploy:
+  - provider: npm
+    email: admin.npm@commitground.org
+    api_key:
+      secure: jVAfybwTNOK9iRELrHpfZhxYf5QvVBw7iP6wwkxlg2CnCz/BZj8k1HZ+lQAcZeoIzxF0x/0xQMh8hsWcIK4FXKbGvuPQ6EL7UqyX652V8mSJ6UqrHQGqkYNVB+bS+1563RnTIWitbFSDm6+artDjW4Yv5ftWGr8mMzoR1+MmyByblDcO7pCU2avqSOQLmxCCo0/hTb114RhS/5AeAL2cE3hhdKGx9sfyuyLeSGhpAZTL8Fq2soXY7LzAq0smOhs50SKeg7P/daT5ZM8UzCmoGL8wXuK8PMeZ/34Iqjt2p9dOtYHGZD4L28VOcTePuB/W+7C4dJjDV8mqLb37+d2paqQw3bqZ+Br3nlRmighlFfVxDBjy7S0wt8Wu6zL4Ih1h+33Qbrmc629MNDbE6xqFlAUpJzQg5t5n9b5vkqQoxy+63vmCFW2YmwM9Zm9TIZC1h7X7whvTB6e9N770kH7R2lunv16vGrVM73dBijeYvQsFj+heB6zr74vuULRmfXhB2Ezo48ArcxoyX/HyT5G9IKdauI1MLXNVqwvBp6cHn8SeQ+odGBo5PeJY3mJ55kNuoZsiavYikZn3Px0r+2ukNhn5cMGAeyDa1q++HKL8OY27LCf0V2v5ODP5n+9J/FN5yRz8YIggZZMEZhwFP8HA2IaXf+i1u/IXtyLfS5uhyNM=
+    tag: next
+    on:
+      condition: $NEXT != $CURRENT_VERSION
+      branch: develop
+      repo: commitground/solidity-patricia-tree
+  - provider: npm
+    email: admin.npm@commitground.org
+    api_key:
+      secure: jVAfybwTNOK9iRELrHpfZhxYf5QvVBw7iP6wwkxlg2CnCz/BZj8k1HZ+lQAcZeoIzxF0x/0xQMh8hsWcIK4FXKbGvuPQ6EL7UqyX652V8mSJ6UqrHQGqkYNVB+bS+1563RnTIWitbFSDm6+artDjW4Yv5ftWGr8mMzoR1+MmyByblDcO7pCU2avqSOQLmxCCo0/hTb114RhS/5AeAL2cE3hhdKGx9sfyuyLeSGhpAZTL8Fq2soXY7LzAq0smOhs50SKeg7P/daT5ZM8UzCmoGL8wXuK8PMeZ/34Iqjt2p9dOtYHGZD4L28VOcTePuB/W+7C4dJjDV8mqLb37+d2paqQw3bqZ+Br3nlRmighlFfVxDBjy7S0wt8Wu6zL4Ih1h+33Qbrmc629MNDbE6xqFlAUpJzQg5t5n9b5vkqQoxy+63vmCFW2YmwM9Zm9TIZC1h7X7whvTB6e9N770kH7R2lunv16vGrVM73dBijeYvQsFj+heB6zr74vuULRmfXhB2Ezo48ArcxoyX/HyT5G9IKdauI1MLXNVqwvBp6cHn8SeQ+odGBo5PeJY3mJ55kNuoZsiavYikZn3Px0r+2ukNhn5cMGAeyDa1q++HKL8OY27LCf0V2v5ODP5n+9J/FN5yRz8YIggZZMEZhwFP8HA2IaXf+i1u/IXtyLfS5uhyNM=
+    tag: latest
+    on:
+      condition: $LATEST != $CURRENT_VERSION
+      branch: master
+      repo: commitground/solidity-patricia-tree
+  - provider: releases
+    api_key:
+      secure: 26toS7KvokzQ+gDib9xoDIHtBzZOFjdCjFiHqla19I8IXxuiLhszgCTIzBXIvBPaajYyfG7u4tdhPwqUebBrQzoob/QA+/sBRuP+/CAQWJ3n+XmRb767ut4QhurnyfONmxqz8UYkQGIzr3gdEkrI3yXsxKuFOQI7k9MDCWagqT0mlqZyMyhjnEpWFEdHERv7Jz4L5vS3A2EtMZwGs6dwEhKS3nZzvZPusEOV6rmMXL83IjYg0XzhTjwkysaxq7owE66pEFayjAreydZ8uWtg96IaD2bbddQD5PcNRPuXRssGKI/2wDV0MPNtx1C9DOqnRVko1lL248d/em1cI7dGIlCzxU7Qt6T7N2qZOeUCsfpkThUuj6RpzLw8FGJHSdySf0YRJ6tMy1xBW5Nl+W40JhBO1xdFQ5oq9h3o8Q2Tn5okaAX9WsdiyAVrMXifE+UchE2F9X7K4lh8RlD6dCcFAvsObytZxx7rxmYOBxb0M+KpFXSP4FDm7VBzxLw+tMeg7gq8dB21NEYt95oAr4AasstZcyqluwDqz/cYK53Y7Q4PKfx8SwDVRA4hONYFfT4dMvYaGalcbu1FsI67ATkdqlyLhdgiBrKpjitCP0zT0lBOeBQF16W7TQTXyEqjhUV8EUJwd2nKjxIX0NOoVcCSJWwcAWcqMI6Eeon1/eh3FNc=
+    on:
+      tags: true
+      repo: commitground/solidity-patricia-tree
+      branch: master
+  - provider: releases
+    prerelease: true
+    api_key:
+      secure: 26toS7KvokzQ+gDib9xoDIHtBzZOFjdCjFiHqla19I8IXxuiLhszgCTIzBXIvBPaajYyfG7u4tdhPwqUebBrQzoob/QA+/sBRuP+/CAQWJ3n+XmRb767ut4QhurnyfONmxqz8UYkQGIzr3gdEkrI3yXsxKuFOQI7k9MDCWagqT0mlqZyMyhjnEpWFEdHERv7Jz4L5vS3A2EtMZwGs6dwEhKS3nZzvZPusEOV6rmMXL83IjYg0XzhTjwkysaxq7owE66pEFayjAreydZ8uWtg96IaD2bbddQD5PcNRPuXRssGKI/2wDV0MPNtx1C9DOqnRVko1lL248d/em1cI7dGIlCzxU7Qt6T7N2qZOeUCsfpkThUuj6RpzLw8FGJHSdySf0YRJ6tMy1xBW5Nl+W40JhBO1xdFQ5oq9h3o8Q2Tn5okaAX9WsdiyAVrMXifE+UchE2F9X7K4lh8RlD6dCcFAvsObytZxx7rxmYOBxb0M+KpFXSP4FDm7VBzxLw+tMeg7gq8dB21NEYt95oAr4AasstZcyqluwDqz/cYK53Y7Q4PKfx8SwDVRA4hONYFfT4dMvYaGalcbu1FsI67ATkdqlyLhdgiBrKpjitCP0zT0lBOeBQF16W7TQTXyEqjhUV8EUJwd2nKjxIX0NOoVcCSJWwcAWcqMI6Eeon1/eh3FNc=
+    on:
+      tags: true
+      repo: commitground/solidity-patricia-tree
+      branch: develop

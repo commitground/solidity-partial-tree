@@ -17,7 +17,6 @@
   },
   "dependencies": {},
   "scripts": {
-    "sequenceTest": "scripts/sequenceTest.sh",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "build": "truffle compile",
     "migrate": "truffle migrate",
