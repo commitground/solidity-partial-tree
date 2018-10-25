@@ -6,7 +6,7 @@ import {Utils} from "./utils.sol";
 /**
  MIT License
  Original author: chriseth
- Rewritten by: Wanseob Lim<email@wanseob.com>
+ Rewritten by: Wanseob Lim
  */
 
 library PatriciaTree {

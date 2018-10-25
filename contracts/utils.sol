@@ -3,7 +3,7 @@ pragma solidity ^0.4.24;
 /**
  MIT License
  Original author: chriseth
- Refactored by Wanseob Lim<email@wanseob.com>
+ Refactored by Wanseob Lim
  */
 
 import {D} from "./data.sol";
