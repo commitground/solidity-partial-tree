@@ -1,0 +1,42 @@
+{
+  "name": "solidity-patricia-tree",
+  "version": "1.0.0",
+  "description": "Patricia Tree solidity implemenation",
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-bignumber": "^2.0.2",
+    "ganache-cli": "^6.1.8",
+    "solidity-coverage": "^0.5.11",
+    "solidity-docgen": "^0.1.0",
+    "standard": "^12.0.1",
+    "truffle": "^4.1.14",
+    "truffle-hdwallet-provider": "^0.0.5"
+  },
+  "dependencies": {},
+  "scripts": {
+    "sequenceTest": "scripts/sequenceTest.sh",
+    "coverage": "./node_modules/.bin/solidity-coverage",
+    "build": "truffle compile",
+    "migrate": "truffle migrate",
+    "test": "scripts/test.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/commitground/solidity-patricia-tree.git"
+  },
+  "keywords": [
+    "Solidity",
+    "Patricia",
+    "Merkle",
+    "Tree"
+  ],
+  "author": "Wanseob Lim<email@wanseob.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/commitground/solidity-patricia-tree/issues"
+  },
+  "homepage": "https://github.com/commitground/solidity-patricia-tree#readme"
+}
