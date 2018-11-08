@@ -214,8 +214,8 @@ library PatriciaTree {
             // Partial match, just follow the path
             return _findAtNode(tree, e.node, suffix);
         } else {
-            // Mismatch, so let us create a new branch node.
-            revert();
+            // Mismatch, return empty bytes
+            return bytes32(0);
         }
     }
 }
