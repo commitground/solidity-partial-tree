@@ -17,7 +17,7 @@
   },
   "dependencies": {},
   "scripts": {
-    "coverage": "./node_modules/.bin/solidity-coverage",
+    "coverage": "scripts/coverage.sh",
     "build": "truffle compile",
     "migrate": "truffle migrate",
     "test": "scripts/test.sh"
