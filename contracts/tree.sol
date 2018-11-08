@@ -61,7 +61,11 @@ library PatriciaTree {
     //                    where we have branch nodes (bit in key denotes direction)
     //  - bytes32[] hashes - hashes of sibling edges
     function getProof(Tree storage tree, bytes key) internal view returns (uint branchMask, bytes32[] _siblings) {
-        D.Label memory k = D.Label(keccak256(key), 256);
+        return getProofWithHashedKey(tree, keccak256(key));
+    }
+
+    function getProofWithHashedKey(Tree storage tree, bytes32 hashedKey) internal view returns (uint branchMask, bytes32[] _siblings) {
+        D.Label memory k = D.Label(hashedKey, 256);
         D.Edge memory e = tree.rootEdge;
         bytes32[256] memory siblings;
         uint length;
