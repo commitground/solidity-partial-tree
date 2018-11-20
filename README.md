@@ -1,19 +1,19 @@
-# Solidity Patricia Tree
+# Solidity Sparse Tree
 
 ## Credits 
 
-This is a rewritten version of [Christian Reitwießner](https://github.com/chriseth)'s [patricia-tree](https://github.com/chriseth/patricia-tree) to use his patricia tree implementation as a solidity library through npm.
+This implementation is based on [Christian Reitwießner](https://github.com/chriseth)'s [patricia-tree](https://github.com/chriseth/patricia-tree) 
 
 
 ##### latest released version
-[![npm](https://img.shields.io/npm/v/solidity-patricia-tree/latest.svg)](https://www.npmjs.com/package/solidity-patricia-tree)
-[![Build Status](https://travis-ci.org/commitground/solidity-patricia-tree.svg?branch=master)](https://travis-ci.org/commitground/solidity-patricia-tree)
-[![Coverage Status](https://coveralls.io/repos/github/commitground/solidity-patricia-tree/badge.svg?branch=master)](https://coveralls.io/github/commitground/solidity-patricia-tree?branch=develop)
+[![npm](https://img.shields.io/npm/v/solidity-sparse-tree/latest.svg)](https://www.npmjs.com/package/solidity-sparse-tree)
+[![Build Status](https://travis-ci.org/commitground/solidity-sparse-tree.svg?branch=master)](https://travis-ci.org/commitground/solidity-sparse-tree)
+[![Coverage Status](https://coveralls.io/repos/github/commitground/solidity-sparse-tree/badge.svg?branch=master)](https://coveralls.io/github/commitground/solidity-sparse-tree?branch=develop)
 
 ##### in progress
-[![npm](https://img.shields.io/npm/v/solidity-patricia-tree/next.svg)](https://www.npmjs.com/package/solidity-patricia-tree)
-[![Build Status](https://travis-ci.org/commitground/solidity-patricia-tree.svg?branch=develop)](https://travis-ci.org/commitground/solidity-patricia-tree)
-[![Coverage Status](https://coveralls.io/repos/github/commitground/solidity-patricia-tree/badge.svg?branch=develop)](https://coveralls.io/github/commitground/solidity-patricia-tree?branch=develop)
+[![npm](https://img.shields.io/npm/v/solidity-sparse-tree/next.svg)](https://www.npmjs.com/package/solidity-sparse-tree)
+[![Build Status](https://travis-ci.org/commitground/solidity-sparse-tree.svg?branch=develop)](https://travis-ci.org/commitground/solidity-sparse-tree)
+[![Coverage Status](https://coveralls.io/repos/github/commitground/solidity-sparse-tree/badge.svg?branch=develop)](https://coveralls.io/github/commitground/solidity-sparse-tree?branch=develop)
 
 [![JavaScript Style Guide](https://cdn.rawgit.com/standard/standard/master/badge.svg)](https://github.com/standard/standard)
 
@@ -22,47 +22,57 @@ This is a rewritten version of [Christian Reitwießner](https://github.com/chris
 ## Usage
 
 ```bash
+npm i solidity-sparse-tree
 npm i solidity-patricia-tree
 ```
 
 ```solidity
+pragma solidity ^0.4.24;
 
-pragma solidity ^0.4.25;
+import {SparseTree} from "solidity-sparse-tree/contracts/tree.sol";
+import {PatriciaTree} from "solidity-patricia-tree/contracts/tree.sol";
 
-import {PatriciaTree} from "solidity-patricia-tree/contracts/tree.sol"; 
-
-contract TestPatriciaTree {
+contract TestSparseTree {
+    using SparseTree for SparseTree.Tree;
     using PatriciaTree for PatriciaTree.Tree;
-    PatriciaTree.Tree tree;
 
-    function test() public {
-        // testInsert();
-        testProofs();
-    }
+    PatriciaTree.Tree patriciaTree;
+    SparseTree.Tree sparseTree;
 
-    function testInsert() internal {
-        tree.insert("one", "ONE");
-        tree.insert("two", "ONE");
-        tree.insert("three", "ONE");
-        tree.insert("four", "ONE");
-        tree.insert("five", "ONE");
-        tree.insert("six", "ONE");
-        tree.insert("seven", "ONE");
-        // update
-        tree.insert("one", "TWO");
-    }
+    /**
+     * @dev we can reenact merkle tree transformation by submitting only referred siblings instead of submitting all nodes
+     */
+    function testSparseTree() public {
+        // update merkle root
+        patriciaTree.insert("key1", "val1");
+        patriciaTree.insert("key2", "val2");
+        patriciaTree.insert("key3", "val3");
 
-    function testProofs() internal {
-        tree.insert("one", "ONE");
+        // root hash of patricia tree @ phase A
+        bytes32 phaseAOfPatriciaTree = patriciaTree.getRootHash();
+
+        // get siblings to update "key1"
         uint branchMask;
         bytes32[] memory siblings;
-        (branchMask, siblings) = tree.getProof("one");
-        PatriciaTree.verifyProof(tree.root, "one", "ONE", branchMask, siblings);
-        tree.insert("two", "TWO");
-        (branchMask, siblings) = tree.getProof("one");
-        PatriciaTree.verifyProof(tree.root, "one", "ONE", branchMask, siblings);
-        (branchMask, siblings) = tree.getProof("two");
-        PatriciaTree.verifyProof(tree.root, "two", "TWO", branchMask, siblings);
+        (branchMask, siblings) = patriciaTree.getProof("key1");
+
+        // Init sparse tree with the root hash
+        sparseTree.initialize(phaseAOfPatriciaTree);
+        // commit branch (we submit sibling data here)
+        sparseTree.commitBranch("key1", "val1", branchMask, siblings);
+
+        // Update key1 of patricia tree
+        patriciaTree.insert("key1", "val4");
+
+        // Update key1 of sparse tree
+        sparseTree.insert("key1", "val4");
+
+        // get updated root hashes of each tree
+        bytes32 phaseBOfPatriciaTree = patriciaTree.getRootHash();
+        bytes32 phaseBOfSparseTree = sparseTree.getRootHash();
+
+        // We have succeeded to reenact merkle tree transformation without submitting all node data
+        require(phaseBOfPatriciaTree == phaseBOfSparseTree);
     }
 }
 ```
@@ -74,7 +84,7 @@ contract TestPatriciaTree {
 
 ```bash
 npm install -g truffle
-npm install -g ganache
+npm install -g ganache-cli
 npm install
 ```
 
@@ -87,9 +97,7 @@ Running and reading the test cases will help you understand how it works.
 npm run test
 ```
 
-
 ## Contributors
-- Original author: [Christian Reitwießner](https://github.com/chriseth)
 - [Wanseob Lim](https://github.com/james-lim)<[email@wanseob.com](mailto:email@wanseob.com)>
 
 ## License

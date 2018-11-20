@@ -22,7 +22,7 @@ coverage
 coverage.json
 .coveralls.yml
 
-# nyc test coverage
+# nyc tests coverage
 .nyc_output
 
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)

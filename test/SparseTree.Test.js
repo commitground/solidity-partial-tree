@@ -3,16 +3,16 @@ const assert = chai.assert
 const BigNumber = web3.BigNumber
 const should = chai.use(require('chai-bignumber')(BigNumber)).should()
 
-const PatriciaTreeImplementation = artifacts.require('PatriciaTreeImplementation')
+const SparseTreeImplementation = artifacts.require('SparseTreeImplementation')
 const { toNodeObject, progress } = require('./utils')
 
 const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
-contract('PatriciaTree', async ([_, primary, nonPrimary]) => {
-  context('inherits the patricia tree smart contract', async () => {
+contract('SparseTree', async ([_, primary, nonPrimary]) => {
+  context('SparseTree is also a kind of patricia merkle tree', async () => {
     let tree
-    beforeEach('deploy PatriciaTree', async () => {
-      tree = await PatriciaTreeImplementation.new({ from: primary })
+    beforeEach('deploy SparseTree', async () => {
+      tree = await SparseTreeImplementation.new({ from: primary })
     })
     describe('insert()', async () => {
       it('should not use gas more than 1 million', async () => {
@@ -81,11 +81,10 @@ contract('PatriciaTree', async ([_, primary, nonPrimary]) => {
         }
         progress.close()
         // get root hash of the first tree
-        let rootEdgeOfTree = await tree.getRootEdge()
-        let rootHashOfTree = rootEdgeOfTree[2]
+        let rootHashOfFirstTree = await tree.getRootHash()
 
         // deploy a second tree
-        let secondTree = await PatriciaTreeImplementation.new({ from: primary })
+        let secondTree = await SparseTreeImplementation.new({ from: primary })
         // insert same items into the second tree
         for (const key of Object.keys(items)) {
           await progress.log(`Insert items into the second tree (${key}, ${items[key]})`, 500)
@@ -93,78 +92,10 @@ contract('PatriciaTree', async ([_, primary, nonPrimary]) => {
         }
         progress.close()
         // get root hash of the second tree
-        let rootEdgeOfSecondTree = await secondTree.getRootEdge()
-        let rootHashOfSecondTree = rootEdgeOfSecondTree[2]
+        let rootHashOfSecondTree = await secondTree.getRootHash()
 
         // compare the two root hashes
-        assert.equal(rootHashOfTree, rootHashOfSecondTree)
-      })
-    })
-
-    describe('getNode()', async () => {
-      it('should able to find all nodes', async () => {
-        let items = {
-          'key1': 'value1',
-          'key2': 'value2',
-          'key3': 'value3',
-          'key4': 'value4',
-          'key5': 'value5'
-        }
-
-        // insert items
-        for (const key of Object.keys(items)) {
-          await tree.insert(key, items[key], { from: primary })
-        }
-
-        // find all nodes and check stored value hash
-        let leafNodes = []
-        let nodeObjs = []
-
-        const getNodeRecursively = (depth, parent, hash) => new Promise(async res => {
-          let result = await tree.getNode(hash)
-          let nodes = [
-            [result[0], result[1], result[2]],
-            [result[3], result[4], result[5]]]
-          for (let i = 0; i < nodes.length; i++) {
-            let nodeObj = toNodeObject(depth, hash, nodes[i])
-            nodeObjs.push(nodeObj)
-            let nodeHashValue = nodeObj.node
-            if (nodeHashValue == ZERO) {
-              // Because an edge should always have two nodes, it duplicates a leaf node when only one exist.
-              // Therefore, if there already exists a same node, do not push it into the leaf node array.
-              let leafNode = {
-                parent,
-                hash
-              }
-              let leafNodeAlreadyExist = leafNodes.reduce((val, item) => JSON.stringify(item) === JSON.stringify(leafNode), 0)
-              if (!leafNodeAlreadyExist) {
-                leafNodes.push(leafNode)
-              }
-            } else {
-              await getNodeRecursively(depth + 1, hash, nodeHashValue)
-            }
-          }
-          progress.close()
-          res()
-        })
-
-        // Get root hash to start to find nodes recursively
-        let rootNode = toNodeObject(0, 'root', await tree.getRootEdge())
-        let rootValue = rootNode.node
-        // Find nodes recursively and add leaf nodes to the array
-        await getNodeRecursively(1, 'root', rootValue)
-
-        // Compare the found leaf nodes and initial items
-        let hashValuesFromLeafNodes = leafNodes.map(leafNode => leafNode.hash)
-        let hashValuesFromInitialItems = Object.values(items).map(item => web3.sha3(item))
-        assert.equal(
-          JSON.stringify(hashValuesFromLeafNodes.sort()),
-          JSON.stringify(hashValuesFromInitialItems.sort())
-        )
-
-        // if you want to see more in detail, you can print the leafNodes and nodeObj arrays.
-        // console.log(nodeObjs);
-        // console.log(leafNodes);
+        assert.equal(rootHashOfFirstTree, rootHashOfSecondTree)
       })
     })
 
@@ -210,6 +141,54 @@ contract('PatriciaTree', async ([_, primary, nonPrimary]) => {
         await tree.insert('foo', 'bar', { from: primary })
         assert.equal(web3.toUtf8(await tree.get('foo')), 'bar')
       })
+    })
+  })
+
+  context('We can reenact merkle tree transformation by submitting only referred siblings instead of submitting all nodes', async () => {
+    let treeA
+    let treeB
+    let firstPhaseOfTreeA
+    let branchMaskForKey1
+    let siblingsForKey1
+    let referredValueForKey1
+    before(async () => {
+      treeA = await SparseTreeImplementation.new()
+      treeB = await SparseTreeImplementation.new()
+
+      await treeA.insert('key1', 'val1')
+      await treeA.insert('key2', 'val2')
+      await treeA.insert('key3', 'val3')
+      firstPhaseOfTreeA = await treeA.getRootHash()
+      referredValueForKey1 = await treeA.get('key1')
+
+      let proof = await treeA.getProof('key1')
+      branchMaskForKey1 = proof[0]
+      siblingsForKey1 = proof[1]
+    })
+
+    it('should start with same root hash by initialization', async()=> {
+      //initilaze with the first root hash
+      await treeB.initialize(firstPhaseOfTreeA)
+      assert.equal(await treeB.getRootHash(), firstPhaseOfTreeA)
+    })
+
+    it('should not change root after committing branch data', async ()=> {
+      // commit branch data
+      await treeB.commitBranch('key1', referredValueForKey1, branchMaskForKey1, siblingsForKey1)
+      assert.equal(await treeB.getRootHash(), firstPhaseOfTreeA)
+    })
+
+    it('should be able to return proof data', async ()=> {
+      // commit branch data
+      await treeB.getProof('key1')
+    })
+
+    it('should have same root hash when we update key1', async () => {
+      await treeA.insert('key1', 'val4')
+      await treeB.insert('key1', 'val4')
+      let secondPhaseOfTreeA = await treeA.getRootHash()
+      let secondPhaseOfTreeB = await treeB.getRootHash()
+      assert.equal(secondPhaseOfTreeA, secondPhaseOfTreeB)
     })
   })
 })

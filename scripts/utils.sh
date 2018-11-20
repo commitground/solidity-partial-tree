@@ -26,7 +26,7 @@ compile() {
   [ $? -ne 0 ] && exit 1
 }
 
-# Run private block-chain for test cases
+# Run private block-chain for tests cases
 run_ganache() {
   ganache-cli > /dev/null & pid=$!
   if ps -p $pid > /dev/null
@@ -44,13 +44,13 @@ migrate() {
   [ $? -ne 0 ] && exit 1
 }
 
-# Run test cases with truffle
+# Run tests cases with truffle
 run_test() {
   truffle test --network development
   [ $? -ne 0 ] && exit 1
 }
 
-# Check test coverage
+# Check tests coverage
 run_coverage() {
   ./node_modules/.bin/solidity-coverage
 }

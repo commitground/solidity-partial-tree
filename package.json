@@ -1,7 +1,7 @@
 {
-  "name": "solidity-patricia-tree",
-  "version": "1.0.3",
-  "description": "Patricia Tree solidity implemenation",
+  "name": "solidity-sparse-tree",
+  "version": "0.0.0",
+  "description": "Sparse Tree solidity implemenation",
   "directories": {
     "test": "test"
   },
@@ -24,10 +24,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/commitground/solidity-patricia-tree.git"
+    "url": "git+https://github.com/commitground/solidity-sparse-tree.git"
   },
   "keywords": [
     "Solidity",
+    "Sparse",
     "Patricia",
     "Merkle",
     "Tree"
@@ -35,7 +36,7 @@
   "author": "Wanseob Lim<email@wanseob.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/commitground/solidity-patricia-tree/issues"
+    "url": "https://github.com/commitground/solidity-sparse-tree/issues"
   },
-  "homepage": "https://github.com/commitground/solidity-patricia-tree#readme"
+  "homepage": "https://github.com/commitground/solidity-sparse-tree#readme"
 }

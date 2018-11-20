@@ -9,7 +9,7 @@ install:
 - npm install
 
 script:
-- npm run test
+- npm run tests
 
 after_success:
 - export CURRENT_VERSION=$(node -p "require('./package.json').version")

@@ -1,15 +1,16 @@
 pragma solidity ^0.4.24;
 
-import {D} from "./data.sol";
 import {Utils} from "./utils.sol";
+import {D} from "./data.sol";
 
 /**
  MIT License
- Original author: chriseth
- Rewritten by: Wanseob Lim
+ Based on patricia-trie implementation of chriseth
  */
 
-library PatriciaTree {
+library SparseTree {
+    using D for D.Edge;
+
     struct Tree {
         // Mapping of hash of key to value
         mapping(bytes32 => bytes) values;
@@ -19,6 +20,68 @@ library PatriciaTree {
         // The current root hash, keccak256(node(path_M('')), path_M(''))
         bytes32 root;
         D.Edge rootEdge;
+    }
+
+    function initialize(Tree storage tree, bytes32 root) internal {
+        require(tree.root == bytes32(0));
+        tree.root = root;
+    }
+
+    function commitBranch(Tree storage tree, bytes key, bytes value, uint branchMask, bytes32[] siblings) internal {
+        D.Label memory k = D.Label(keccak256(key), 256);
+        D.Edge memory e;
+        e.node = keccak256(value);
+        tree.values[e.node] = value;
+        // e.node(0x083d)
+        for (uint i = 0; branchMask != 0; i++) {
+            // retrieve edge data with branch mask
+            uint bitSet = Utils.lowestBitSet(branchMask);
+            branchMask &= ~(uint(1) << bitSet);
+            (k, e.label) = Utils.splitAt(k, 255 - bitSet);
+            uint bit;
+            (bit, e.label) = Utils.chopFirstBit(e.label);
+
+            // find upper node with retrieved edge & sibling
+            bytes32[2] memory edgeHashes;
+            edgeHashes[bit] = edgeHash(e);
+            edgeHashes[1 - bit] = siblings[siblings.length - i - 1];
+            bytes32 upperNode = keccak256(abi.encode(edgeHashes[0], edgeHashes[1]));
+
+            // Update sibling information
+            D.Node storage parentNode = tree.nodes[upperNode];
+            // Put edge
+            parentNode.children[bit] = e;
+            // Put sibling edge if needed
+            if (parentNode.children[1 - bit].isEmpty()) {
+                parentNode.children[1 - bit].header = siblings[siblings.length - i - 1];
+            }
+            // go to upper edge
+            e.node = keccak256(abi.encode(edgeHashes[0], edgeHashes[1]));
+        }
+        e.label = k;
+        require(tree.root == edgeHash(e));
+        tree.root = edgeHash(e);
+        tree.rootEdge = e;
+    }
+
+    function insert(Tree storage tree, bytes key, bytes value) internal {
+        D.Label memory k = D.Label(keccak256(key), 256);
+        bytes32 valueHash = keccak256(value);
+        tree.values[valueHash] = value;
+        // keys.push(key);
+        D.Edge memory e;
+        if (tree.rootEdge.node == 0 && tree.rootEdge.label.length == 0)
+        {
+            // Empty Trie
+            e.label = k;
+            e.node = valueHash;
+        }
+        else
+        {
+            e = _insertAtEdge(tree, tree.rootEdge, k, valueHash);
+        }
+        tree.root = edgeHash(e);
+        tree.rootEdge = e;
     }
 
     function get(Tree storage tree, bytes key) internal view returns (bytes) {
@@ -33,21 +96,13 @@ library PatriciaTree {
         return tree.root;
     }
 
-
-    function getNode(Tree storage tree, bytes32 hash) internal view returns (uint, bytes32, bytes32, uint, bytes32, bytes32) {
-        D.Node storage n = tree.nodes[hash];
-        return (
-        n.children[0].label.length, n.children[0].label.data, n.children[0].node,
-        n.children[1].label.length, n.children[1].label.data, n.children[1].node
-        );
-    }
-
-    function getRootEdge(Tree storage tree) internal view returns (uint, bytes32, bytes32) {
-        return (tree.rootEdge.label.length, tree.rootEdge.label.data, tree.rootEdge.node);
-    }
-
     function edgeHash(D.Edge memory e) internal pure returns (bytes32) {
-        return keccak256(abi.encode(e.node, e.label.length, e.label.data));
+        require(!e.isEmpty());
+        if (e.hasNode()) {
+            return keccak256(abi.encode(e.node, e.label.length, e.label.data));
+        } else {
+            return e.header;
+        }
     }
 
     // Returns the hash of the encoding of a node.
@@ -116,29 +171,13 @@ library PatriciaTree {
         require(rootHash == edgeHash(e));
     }
 
-    // TODO also return the proof
-    function insert(Tree storage tree, bytes key, bytes value) internal {
-        D.Label memory k = D.Label(keccak256(key), 256);
-        bytes32 valueHash = keccak256(value);
-        tree.values[valueHash] = value;
-        // keys.push(key);
-        D.Edge memory e;
-        if (tree.rootEdge.node == 0 && tree.rootEdge.label.length == 0)
-        {
-            // Empty Trie
-            e.label = k;
-            e.node = valueHash;
-        }
-        else
-        {
-            e = _insertAtEdge(tree, tree.rootEdge, k, valueHash);
-        }
-        tree.root = edgeHash(e);
-        tree.rootEdge = e;
+    function newEdge(bytes32 node, D.Label label) internal pure returns (D.Edge memory e){
+        e.node = node;
+        e.label = label;
     }
 
     function _insertAtNode(Tree storage tree, bytes32 nodeHash, D.Label key, bytes32 value) private returns (bytes32) {
-        require(key.length > 1);
+        //        require(key.length > 1);
         D.Node memory n = tree.nodes[nodeHash];
         uint head;
         D.Label memory tail;
@@ -148,6 +187,7 @@ library PatriciaTree {
     }
 
     function _insertAtEdge(Tree storage tree, D.Edge e, D.Label key, bytes32 value) private returns (D.Edge) {
+        //        require(e.hasNode());
         require(key.length >= e.label.length);
         D.Label memory prefix;
         D.Label memory suffix;
@@ -156,7 +196,7 @@ library PatriciaTree {
         if (suffix.length == 0) {
             // Full match with the key, update operation
             newNodeHash = value;
-        } else if (prefix.length >= e.label.length) {
+        } else if (prefix.length >= e.label.length && e.hasNode()) {
             // Partial match, just follow the path
             newNodeHash = _insertAtNode(tree, e.node, suffix, value);
         } else {
@@ -165,11 +205,11 @@ library PatriciaTree {
             D.Label memory tail;
             (head, tail) = Utils.chopFirstBit(suffix);
             D.Node memory branchNode;
-            branchNode.children[head] = D.Edge(value, tail);
-            branchNode.children[1 - head] = D.Edge(e.node, Utils.removePrefix(e.label, prefix.length + 1));
+            branchNode.children[head] = newEdge(value, tail);
+            branchNode.children[1 - head] = newEdge(e.node, Utils.removePrefix(e.label, prefix.length + 1));
             newNodeHash = _insertNode(tree, branchNode);
         }
-        return D.Edge(newNodeHash, prefix);
+        return newEdge(newNodeHash, prefix);
     }
 
     function _insertNode(Tree storage tree, D.Node memory n) private returns (bytes32 newHash) {
