@@ -9,7 +9,7 @@ install:
 - npm install
 
 script:
-- npm run tests
+- npm run test
 
 after_success:
 - export CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -29,35 +29,34 @@ before_deploy:
 
 deploy:
 - provider: npm
-  email: admin.npm@commitground.io
+  email: email@wanseob.com
   api_key:
-    secure: qi+8tuTrqap0iUIQxwyzVu3+nhW3RYA2u00lg88vvlVVxngeDzW6E96SCZfo7FMnCGJoxGoa50RK/XKyfBKSw/fSTV8TtEfGWCoIsvfYRk1h5/z/rA4lJCoxZQ6s22ne12tkCzU8++cyIu2ybb1tiZoBUWMwmnPrFYZBEazj3sm7hYKJCbwpMiN6j79YdZdG13E1/W2lQxlttBJX0DnahBsjSmNpW8lKUhpZ0xTxG62pv0ET9gv968sJLGP5nU4G66nJpALZHrVdYDybDPUZBvkNpDi7uwfXN+a9oJbBT1iAW98L5ManyoV8A3Ybwnwgie7qV6yMYHsWKuHYSQxTX6cK4I8np2dpxLL3gPQOkubZxy4oQUn6Ay3ziAw3PSOKlLd3NPRmF6w4amw8H6yfwrFR61sguPFvRsyO/PO97LTNepHvaNXJJAaPnsalhyKQ+4jf+Cc7UTuvT+2GgxByoVoqyAL16DtBkYae37oCosHJRKLSl4m1i56z3Gciea7dljcEpByEDiB5MH9o2gt9VA6BlFvOx6jhXv8J1EWC8FNB+eGbI/5OBuyaWFe39ADq6j1pRz+iHDBOe78gP94TycSCd4HdTrmshshHNXQdO/+H9vNzp67C6SVMFqlqZiIZIi4LhYCziK74st/XM1Zi3qqEh+pNtIQbH6vvNrN3FDQ=
+    secure: FmAB3Bee6zJa6s6hAnUELCRopRkD9M0uV4YL4W54N1GBcwUDPzviup67+e7XZVI4JJXNviD/t+5RlDCd0OdV4JnE6h70UBzeQTVu+lzauSRBflJfyO3FZ8szJwmYxldTMaYHEG07UqL6anc4Qn1GI16wppzG+sVHl7siGSgCkl5mxTclzW4DYjnm5KpBiWf3qzx3usK/5UrZMt+s/pTOkZ+BLAh30UcAhR07en00Ky/ouFj2R4zjJK7ZMrElVxx9SpI41ds/RGUFClL6e1Yc6b8pRtbVu9t7jMBpfck2c81s9GS1alD6JsWASARx4NQvw94zGMhwGYUyYEviB0jinvkJpKfTmcWUF0gASWkUPZvzybbSul39To0grUj5pHwUihhsSm68kaRmkGh5oCthMwF8mJ23L4T8fK5IHRgFizffmU3up18poRZn20gpp71WleaRDEg73AC8jXWWWhcAmy70L9iIaQ1+mVi9vJY+ykGzJlBv4tfZ1fTjQLalayU/NeIv5sUZ31zmRoUA2JUgOuAvlpKWD2tZW4ch0k91NNBjuSmHJebzSp6IQ4TS0lMjJ6NvE+OVpbselAwsjlslN6/opbDzhcIYow7/Lr4dOT0bA9N68ssBoguUKkoO5RwavE4QoWoO0AAgRYcvuqiKM9+PFLA+SiLiBv6RX+8DFZ4=
   tag: next
   on:
     condition: $NEXT != $CURRENT_VERSION
+    tags: true
+    repo: commitground/solidity-sparse-tree
+  on:
     branch: develop
-    repo: commitground/solidity-patricia-tree
+    repo: commitground/solidity-sparse-tree
 - provider: npm
-  email: admin.npm@commitground.io
+  email: email@wanseob.com
   api_key:
-    secure: qi+8tuTrqap0iUIQxwyzVu3+nhW3RYA2u00lg88vvlVVxngeDzW6E96SCZfo7FMnCGJoxGoa50RK/XKyfBKSw/fSTV8TtEfGWCoIsvfYRk1h5/z/rA4lJCoxZQ6s22ne12tkCzU8++cyIu2ybb1tiZoBUWMwmnPrFYZBEazj3sm7hYKJCbwpMiN6j79YdZdG13E1/W2lQxlttBJX0DnahBsjSmNpW8lKUhpZ0xTxG62pv0ET9gv968sJLGP5nU4G66nJpALZHrVdYDybDPUZBvkNpDi7uwfXN+a9oJbBT1iAW98L5ManyoV8A3Ybwnwgie7qV6yMYHsWKuHYSQxTX6cK4I8np2dpxLL3gPQOkubZxy4oQUn6Ay3ziAw3PSOKlLd3NPRmF6w4amw8H6yfwrFR61sguPFvRsyO/PO97LTNepHvaNXJJAaPnsalhyKQ+4jf+Cc7UTuvT+2GgxByoVoqyAL16DtBkYae37oCosHJRKLSl4m1i56z3Gciea7dljcEpByEDiB5MH9o2gt9VA6BlFvOx6jhXv8J1EWC8FNB+eGbI/5OBuyaWFe39ADq6j1pRz+iHDBOe78gP94TycSCd4HdTrmshshHNXQdO/+H9vNzp67C6SVMFqlqZiIZIi4LhYCziK74st/XM1Zi3qqEh+pNtIQbH6vvNrN3FDQ=
+    secure: FmAB3Bee6zJa6s6hAnUELCRopRkD9M0uV4YL4W54N1GBcwUDPzviup67+e7XZVI4JJXNviD/t+5RlDCd0OdV4JnE6h70UBzeQTVu+lzauSRBflJfyO3FZ8szJwmYxldTMaYHEG07UqL6anc4Qn1GI16wppzG+sVHl7siGSgCkl5mxTclzW4DYjnm5KpBiWf3qzx3usK/5UrZMt+s/pTOkZ+BLAh30UcAhR07en00Ky/ouFj2R4zjJK7ZMrElVxx9SpI41ds/RGUFClL6e1Yc6b8pRtbVu9t7jMBpfck2c81s9GS1alD6JsWASARx4NQvw94zGMhwGYUyYEviB0jinvkJpKfTmcWUF0gASWkUPZvzybbSul39To0grUj5pHwUihhsSm68kaRmkGh5oCthMwF8mJ23L4T8fK5IHRgFizffmU3up18poRZn20gpp71WleaRDEg73AC8jXWWWhcAmy70L9iIaQ1+mVi9vJY+ykGzJlBv4tfZ1fTjQLalayU/NeIv5sUZ31zmRoUA2JUgOuAvlpKWD2tZW4ch0k91NNBjuSmHJebzSp6IQ4TS0lMjJ6NvE+OVpbselAwsjlslN6/opbDzhcIYow7/Lr4dOT0bA9N68ssBoguUKkoO5RwavE4QoWoO0AAgRYcvuqiKM9+PFLA+SiLiBv6RX+8DFZ4=
   tag: latest
   on:
     condition: $LATEST != $CURRENT_VERSION
+    tags: true
+    repo: commitground/solidity-sparse-tree
+  on:
     branch: master
-    repo: commitground/solidity-patricia-tree
+    repo: commitground/solidity-sparse-tree
+
 - provider: releases
   api_key:
-    secure: meyzpOOwwLKhWGU0gy0RDXnX0lBFlmIlN3SPADDMMCQ6ewxBpfwW/LsJMpIqyGQ/gZ/TdR/P5ITQn8SOlD/ZHWiPhPQvTYRzIEzRakx4ngms0o9KhphDJywCNk2T/vNMi64SRt7Fcu+6truIR2IHU7qHk9BcGz1xFTzK6b8WueTbVUS295l5pfZZfq1pwQnnY/5JxIMphyi3H5eJL/UmgB1PkPHNW+9YSnE83m7mVAfJGZpsFGDu2eNDXMCxWpgLTG69QaoMKWU3IAj+YJ6lefhy8dXWP78+mJgpyNnjEc25YctpGDa+EKsJ8wZut/fbJhAmPPk4xAk/Uxa1KSM/O73Or630dDAcbJ0AmdFWKwshKBf/ZuAi4YEQawaY4qn3r6hrvPknXCtJN8VCdpcDBv2gE31MdJFZZJf/CrMYmKUiR/6nWAZh1cJjioYLnfnWBRwJ1oFH1szrtRQc1gKcqrh95SKs1R1Z010a9yuso6XbH4NAArKE0elJteLbcLjEDYNeI7B6XZZlvYJsKerKAQxq8wf0KAybI21xtmqumWn2Y2sogUNOXiV86YbRVQ2HSJV2WA1ljZvbd+3r5c8LlB3GAdyKzCknAgo0+3hDWv3JyRyMdtO8IKJBDvV6p1PH/eB0e7txKtacSl5pLkyi28Nj+lx/de0W2rcw23UR7vM=
+    secure: V5eGBJvkmXzwZ0op21QgUupDnRAmSVUpAX7mtuHn+vJqNlv+A5aYP+vpngxDktHj/yzqxI4zjFoifyhZPpKMfHNqg9XG6XY8wyoD2MmQdqULFa7jrIqW/HcdTBsSJYSWvC2K5/B0Agd9zII7mKkK2Qdk4IMB7mIZ2MXLhZOyik288YY+h3tNGDq+A7oOmj3/VyxKtLq6YRQLGvB7KdJw2UFhuC0WUOsUwX7dVytwphB1V4lC5c4hci9tyeqKP55bf5R5B5m4cGhBPSm647Baz41MO9JA01sjQSi84ho6k/tOmR3zbeFHNpMfZc4HZfP52VNKkClH0SGSqWQYjJeXwcs3xFG6TE+lDPcPAE7a6983LIYm2W97aaq1RiYSshbc3+6bYUjURxJNzjHVmDRI0OVqLc0sBVcvK4Z7lhp0T4sgGAdn2Up1RAmHySHSJq/It0C7BOzHAggpY5wDTzR0UZOtGajPF7bRmiAbeFHC6TCqBPq4Ao88+HoyRJzya0OrL+vmLUpdK7UXgCn2z/043oEjp+3GP7AllshZxeqmuzy/gsrjcERPtn8LvnffYO0dBA40e0AyuZbu+ArMU+xDKnLUITb8Ue7rXYEVs7crVHJVSYegXghCvVeD5WAjlOaKZ8kzKKI2u6r26FdIptUMSThBfjPQuqqZVXA+dxc22g0=
   on:
     tags: true
-    repo: commitground/solidity-patricia-tree
+    repo: commitground/solidity-sparse-tree
     branch: master
-- provider: releases
-  prerelease: true
-  api_key:
-    secure: meyzpOOwwLKhWGU0gy0RDXnX0lBFlmIlN3SPADDMMCQ6ewxBpfwW/LsJMpIqyGQ/gZ/TdR/P5ITQn8SOlD/ZHWiPhPQvTYRzIEzRakx4ngms0o9KhphDJywCNk2T/vNMi64SRt7Fcu+6truIR2IHU7qHk9BcGz1xFTzK6b8WueTbVUS295l5pfZZfq1pwQnnY/5JxIMphyi3H5eJL/UmgB1PkPHNW+9YSnE83m7mVAfJGZpsFGDu2eNDXMCxWpgLTG69QaoMKWU3IAj+YJ6lefhy8dXWP78+mJgpyNnjEc25YctpGDa+EKsJ8wZut/fbJhAmPPk4xAk/Uxa1KSM/O73Or630dDAcbJ0AmdFWKwshKBf/ZuAi4YEQawaY4qn3r6hrvPknXCtJN8VCdpcDBv2gE31MdJFZZJf/CrMYmKUiR/6nWAZh1cJjioYLnfnWBRwJ1oFH1szrtRQc1gKcqrh95SKs1R1Z010a9yuso6XbH4NAArKE0elJteLbcLjEDYNeI7B6XZZlvYJsKerKAQxq8wf0KAybI21xtmqumWn2Y2sogUNOXiV86YbRVQ2HSJV2WA1ljZvbd+3r5c8LlB3GAdyKzCknAgo0+3hDWv3JyRyMdtO8IKJBDvV6p1PH/eB0e7txKtacSl5pLkyi28Nj+lx/de0W2rcw23UR7vM=
-  on:
-    tags: true
-    repo: commitground/solidity-patricia-tree
-    branch: develop
