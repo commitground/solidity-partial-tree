@@ -3,16 +3,16 @@ const assert = chai.assert
 const BigNumber = web3.BigNumber
 const should = chai.use(require('chai-bignumber')(BigNumber)).should()
 
-const SparseTreeImplementation = artifacts.require('SparseTreeImplementation')
+const PartialMerkleTreeImplementation = artifacts.require('PartialMerkleTreeImplementation')
 const { toNodeObject, progress } = require('./utils')
 
 const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
-contract('SparseTree', async ([_, primary, nonPrimary]) => {
-  context('SparseTree is also a kind of patricia merkle tree', async () => {
+contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
+  context('PartialMerkleTree is also a kind of patricia merkle tree', async () => {
     let tree
-    beforeEach('deploy SparseTree', async () => {
-      tree = await SparseTreeImplementation.new({ from: primary })
+    beforeEach('deploy PartialMerkleTree', async () => {
+      tree = await PartialMerkleTreeImplementation.new({ from: primary })
     })
     describe('insert()', async () => {
       it('should not use gas more than 1 million', async () => {
@@ -84,7 +84,7 @@ contract('SparseTree', async ([_, primary, nonPrimary]) => {
         let rootHashOfFirstTree = await tree.getRootHash()
 
         // deploy a second tree
-        let secondTree = await SparseTreeImplementation.new({ from: primary })
+        let secondTree = await PartialMerkleTreeImplementation.new({ from: primary })
         // insert same items into the second tree
         for (const key of Object.keys(items)) {
           await progress.log(`Insert items into the second tree (${key}, ${items[key]})`, 500)
@@ -152,8 +152,8 @@ contract('SparseTree', async ([_, primary, nonPrimary]) => {
     let siblingsForKey1
     let referredValueForKey1
     before(async () => {
-      treeA = await SparseTreeImplementation.new()
-      treeB = await SparseTreeImplementation.new()
+      treeA = await PartialMerkleTreeImplementation.new()
+      treeB = await PartialMerkleTreeImplementation.new()
 
       await treeA.insert('key1', 'val1')
       await treeA.insert('key2', 'val2')

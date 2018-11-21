@@ -1,7 +1,7 @@
 {
-  "name": "solidity-sparse-tree",
+  "name": "solidity-partial-tree",
   "version": "1.0.0",
-  "description": "Sparse Tree solidity implemenation",
+  "description": "Solidity implementation of partial merkle tree",
   "directories": {
     "test": "test"
   },
@@ -24,11 +24,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/commitground/solidity-sparse-tree.git"
+    "url": "git+https://github.com/commitground/solidity-partial-tree.git"
   },
   "keywords": [
     "Solidity",
-    "Sparse",
+    "Partial",
     "Patricia",
     "Merkle",
     "Tree"
@@ -36,7 +36,7 @@
   "author": "Wanseob Lim<email@wanseob.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/commitground/solidity-sparse-tree/issues"
+    "url": "https://github.com/commitground/solidity-partial-tree/issues"
   },
-  "homepage": "https://github.com/commitground/solidity-sparse-tree#readme"
+  "homepage": "https://github.com/commitground/solidity-partial-tree#readme"
 }

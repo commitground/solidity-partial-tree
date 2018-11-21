@@ -1,10 +1,10 @@
 pragma solidity ^0.4.24;
 
-import {SparseTree} from "./tree.sol";
+import {PartialMerkleTree} from "./tree.sol";
 
-contract SparseTreeImplementation {
-    using SparseTree for SparseTree.Tree;
-    SparseTree.Tree tree;
+contract PartialMerkleTreeImplementation {
+    using PartialMerkleTree for PartialMerkleTree.Tree;
+    PartialMerkleTree.Tree tree;
 
     constructor () public {
     }
@@ -37,6 +37,6 @@ contract SparseTreeImplementation {
     }
 
     function verifyProof(bytes32 rootHash, bytes key, bytes value, uint branchMask, bytes32[] siblings) public pure {
-        SparseTree.verifyProof(rootHash, key, value, branchMask, siblings);
+        PartialMerkleTree.verifyProof(rootHash, key, value, branchMask, siblings);
     }
 }

@@ -12,7 +12,7 @@ library D {
     }
 
     struct Edge {
-        bytes32 header; // variable for sparse tree  <email@wanseob.com>
+        bytes32 header; // variable for partial merkle tree  <email@wanseob.com>
         bytes32 node;
         Label label;
     }

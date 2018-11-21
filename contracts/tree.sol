@@ -8,7 +8,7 @@ import {D} from "./data.sol";
  Based on patricia-trie implementation of chriseth
  */
 
-library SparseTree {
+library PartialMerkleTree {
     using D for D.Edge;
 
     struct Tree {

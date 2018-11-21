@@ -1,5 +1,5 @@
-const Tree = artifacts.require('SparseTree')
-const Implementation = artifacts.require('SparseTreeImplementation')
+const Tree = artifacts.require('PartialMerkleTree')
+const Implementation = artifacts.require('PartialMerkleTreeImplementation')
 
 module.exports = function (deployer) {
   deployer.deploy(Tree).then(() => {

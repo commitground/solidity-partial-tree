@@ -36,10 +36,10 @@ deploy:
   on:
     condition: $NEXT != $CURRENT_VERSION
     tags: true
-    repo: commitground/solidity-sparse-tree
+    repo: commitground/solidity-partial-tree
   on:
     branch: develop
-    repo: commitground/solidity-sparse-tree
+    repo: commitground/solidity-partial-tree
 - provider: npm
   email: email@wanseob.com
   api_key:
@@ -48,15 +48,15 @@ deploy:
   on:
     condition: $LATEST != $CURRENT_VERSION
     tags: true
-    repo: commitground/solidity-sparse-tree
+    repo: commitground/solidity-partial-tree
   on:
     branch: master
-    repo: commitground/solidity-sparse-tree
+    repo: commitground/solidity-partial-tree
 
 - provider: releases
   api_key:
     secure: V5eGBJvkmXzwZ0op21QgUupDnRAmSVUpAX7mtuHn+vJqNlv+A5aYP+vpngxDktHj/yzqxI4zjFoifyhZPpKMfHNqg9XG6XY8wyoD2MmQdqULFa7jrIqW/HcdTBsSJYSWvC2K5/B0Agd9zII7mKkK2Qdk4IMB7mIZ2MXLhZOyik288YY+h3tNGDq+A7oOmj3/VyxKtLq6YRQLGvB7KdJw2UFhuC0WUOsUwX7dVytwphB1V4lC5c4hci9tyeqKP55bf5R5B5m4cGhBPSm647Baz41MO9JA01sjQSi84ho6k/tOmR3zbeFHNpMfZc4HZfP52VNKkClH0SGSqWQYjJeXwcs3xFG6TE+lDPcPAE7a6983LIYm2W97aaq1RiYSshbc3+6bYUjURxJNzjHVmDRI0OVqLc0sBVcvK4Z7lhp0T4sgGAdn2Up1RAmHySHSJq/It0C7BOzHAggpY5wDTzR0UZOtGajPF7bRmiAbeFHC6TCqBPq4Ao88+HoyRJzya0OrL+vmLUpdK7UXgCn2z/043oEjp+3GP7AllshZxeqmuzy/gsrjcERPtn8LvnffYO0dBA40e0AyuZbu+ArMU+xDKnLUITb8Ue7rXYEVs7crVHJVSYegXghCvVeD5WAjlOaKZ8kzKKI2u6r26FdIptUMSThBfjPQuqqZVXA+dxc22g0=
   on:
     tags: true
-    repo: commitground/solidity-sparse-tree
+    repo: commitground/solidity-partial-tree
     branch: master
