@@ -2,7 +2,7 @@
 
 ## Credits 
 
-This implementation is based on [Christian Reitwießner](https://github.com/chriseth)'s [patricia-trie](https://github.com/chriseth/patricia-tree) 
+This implementation is based on [Christian Reitwießner](https://github.com/chriseth)'s [patricia-trie](https://github.com/chriseth/patricia-trie) 
 
 
 ##### latest released version
