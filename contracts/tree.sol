@@ -146,7 +146,11 @@ library PartialMerkleTree {
     }
 
     function doesInclude(Tree storage tree, bytes key) internal view returns (bool) {
-        bytes32 valueHash = _findNode(tree, key);
+        return doesIncludeHashedKey(tree, keccak256(key));
+    }
+
+    function doesIncludeHashedKey(Tree storage tree, bytes32 hashedKey) internal view returns (bool) {
+        bytes32 valueHash = _findNodeWithHashedKey(tree, hashedKey);
         return (valueHash != bytes32(0));
     }
 
@@ -219,12 +223,21 @@ library PartialMerkleTree {
         bytes32 potentialSiblingValue,
         uint branchMask,
         bytes32[] _siblings
+    ) {
+        return getNonInclusionProofWithHashedKey(tree, keccak256(key));
+    }
+
+    function getNonInclusionProofWithHashedKey(Tree storage tree, bytes32 hashedKey) internal view returns (
+        bytes32 potentialSiblingLabel,
+        bytes32 potentialSiblingValue,
+        uint branchMask,
+        bytes32[] _siblings
     ){
         uint length;
         uint numSiblings;
 
         // Start from root edge
-        D.Label memory label = D.Label(keccak256(key), 256);
+        D.Label memory label = D.Label(hashedKey, 256);
         D.Edge memory e = tree.rootEdge;
         bytes32[256] memory siblings;
 
@@ -358,10 +371,14 @@ library PartialMerkleTree {
     }
 
     function _findNode(Tree storage tree, bytes key) private view returns (bytes32) {
+        return _findNodeWithHashedKey(tree, keccak256(key));
+    }
+
+    function _findNodeWithHashedKey(Tree storage tree, bytes32 hashedKey) private view returns (bytes32) {
         if (tree.rootEdge.node == 0 && tree.rootEdge.label.length == 0) {
             return 0;
         } else {
-            D.Label memory k = D.Label(keccak256(key), 256);
+            D.Label memory k = D.Label(hashedKey, 256);
             return _findAtEdge(tree, tree.rootEdge, k);
         }
     }
