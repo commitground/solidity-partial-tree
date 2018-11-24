@@ -64,6 +64,56 @@ library PartialMerkleTree {
         tree.rootEdge = e;
     }
 
+    function commitBranchOfNonInclusion(
+        Tree storage tree,
+        bytes key,
+        bytes32 potentialSiblingLabel,
+        bytes32 potentialSiblingValue,
+        uint branchMask,
+        bytes32[] siblings
+    ) internal {
+        D.Label memory k = D.Label(keccak256(key), 256);
+        D.Edge memory e;
+        // e.node(0x083d)
+        for (uint i = 0; branchMask != 0; i++) {
+            // retrieve edge data with branch mask
+            uint bitSet = Utils.lowestBitSet(branchMask);
+            branchMask &= ~(uint(1) << bitSet);
+            (k, e.label) = Utils.splitAt(k, 255 - bitSet);
+            uint bit;
+            (bit, e.label) = Utils.chopFirstBit(e.label);
+
+            if (i == 0) {
+                e.label.length = bitSet;
+                e.label.data = potentialSiblingLabel;
+                e.node = potentialSiblingValue;
+            }
+
+            // find upper node with retrieved edge & sibling
+            bytes32[2] memory edgeHashes;
+            edgeHashes[bit] = edgeHash(e);
+            edgeHashes[1 - bit] = siblings[siblings.length - i - 1];
+            bytes32 upperNode = keccak256(abi.encode(edgeHashes[0], edgeHashes[1]));
+
+            // Update sibling information
+            D.Node storage parentNode = tree.nodes[upperNode];
+
+
+            // Put edge
+            parentNode.children[bit] = e;
+            // Put sibling edge if needed
+            if (parentNode.children[1 - bit].isEmpty()) {
+                parentNode.children[1 - bit].header = siblings[siblings.length - i - 1];
+            }
+            // go to upper edge
+            e.node = keccak256(abi.encode(edgeHashes[0], edgeHashes[1]));
+        }
+        e.label = k;
+        require(tree.root == edgeHash(e));
+        tree.root = edgeHash(e);
+        tree.rootEdge = e;
+    }
+
     function insert(Tree storage tree, bytes key, bytes value) internal {
         D.Label memory k = D.Label(keccak256(key), 256);
         bytes32 valueHash = keccak256(value);
@@ -152,6 +202,54 @@ library PartialMerkleTree {
         }
     }
 
+    function getNonInclusionProof(Tree storage tree, bytes key) internal view returns (
+        bytes32 potentialSiblingLabel,
+        bytes32 potentialSiblingValue,
+        uint branchMask,
+        bytes32[] _siblings
+    ){
+        uint length;
+        uint numSiblings;
+
+        // Start from root edge
+        D.Label memory label = D.Label(keccak256(key), 256);
+        D.Edge memory e = tree.rootEdge;
+        bytes32[256] memory siblings;
+
+        while (true) {
+            // Find at edge
+            require(label.length >= e.label.length);
+            D.Label memory prefix;
+            D.Label memory suffix;
+            (prefix, suffix) = Utils.splitCommonPrefix(label, e.label);
+
+            // suffix.length == 0 means that the key exists. Thus the length of the suffix should be not zero
+            require(suffix.length != 0);
+
+            if (prefix.length >= e.label.length) {
+                // Partial matched, keep finding
+                length += prefix.length;
+                branchMask |= uint(1) << (255 - length);
+                length += 1;
+                uint head;
+                (head, label) = Utils.chopFirstBit(suffix);
+                siblings[numSiblings++] = edgeHash(tree.nodes[e.node].children[1 - head]);
+                e = tree.nodes[e.node].children[head];
+            } else {
+                // Found the potential sibling. Set data to return
+                potentialSiblingLabel = e.label.data;
+                potentialSiblingValue = e.node;
+                break;
+            }
+        }
+        if (numSiblings > 0)
+        {
+            _siblings = new bytes32[](numSiblings);
+            for (uint i = 0; i < numSiblings; i++)
+                _siblings[i] = siblings[i];
+        }
+    }
+
     function verifyProof(bytes32 rootHash, bytes key, bytes value, uint branchMask, bytes32[] siblings) public pure {
         D.Label memory k = D.Label(keccak256(key), 256);
         D.Edge memory e;
@@ -163,6 +261,29 @@ library PartialMerkleTree {
             uint bit;
             (bit, e.label) = Utils.chopFirstBit(e.label);
             bytes32[2] memory edgeHashes;
+            edgeHashes[bit] = edgeHash(e);
+            edgeHashes[1 - bit] = siblings[siblings.length - i - 1];
+            e.node = keccak256(abi.encode(edgeHashes[0], edgeHashes[1]));
+        }
+        e.label = k;
+        require(rootHash == edgeHash(e));
+    }
+
+    function verifyNonInclusionProof(bytes32 rootHash, bytes key, bytes32 potentialSiblingLabel, bytes32 potentialSiblingValue, uint branchMask, bytes32[] siblings) public pure {
+        D.Label memory k = D.Label(keccak256(key), 256);
+        D.Edge memory e;
+        for (uint i = 0; branchMask != 0; i++) {
+            uint bitSet = Utils.lowestBitSet(branchMask);
+            branchMask &= ~(uint(1) << bitSet);
+            (k, e.label) = Utils.splitAt(k, 255 - bitSet);
+            uint bit;
+            (bit, e.label) = Utils.chopFirstBit(e.label);
+            bytes32[2] memory edgeHashes;
+            if (i == 0) {
+                e.label.length = bitSet;
+                e.label.data = potentialSiblingLabel;
+                e.node = potentialSiblingValue;
+            }
             edgeHashes[bit] = edgeHash(e);
             edgeHashes[1 - bit] = siblings[siblings.length - i - 1];
             e.node = keccak256(abi.encode(edgeHashes[0], edgeHashes[1]));
