@@ -29,6 +29,14 @@ contract PartialMerkleTreeImplementation {
         return tree.get(key);
     }
 
+    function safeGet(bytes key) public view returns (bytes) {
+        return tree.safeGet(key);
+    }
+
+    function doesInclude(bytes key) public view returns (bool) {
+        return tree.doesInclude(key);
+    }
+
     function getValue(bytes32 hash) public view returns (bytes) {
         return tree.values[hash];
     }

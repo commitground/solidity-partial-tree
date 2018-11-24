@@ -143,6 +143,30 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
       })
     })
 
+    describe('safeGet()', async () => {
+      it('should return stored value for the given key', async () => {
+        await tree.insert('foo', 'bar', { from: primary })
+        assert.equal(web3.toUtf8(await tree.get('foo')), 'bar')
+      })
+      it('should throw if the given key is not included', async () => {
+        await tree.insert('foo', 'bar', { from: primary })
+        try {
+          await tree.get('fuz')
+          assert.fail('Did not reverted')
+        } catch (e) {
+          assert.ok('Reverted successfully')
+        }
+      })
+    })
+
+    describe('doesInclude()', async () => {
+      it('should return boolean whether the tree includes the given key or not', async () => {
+        await tree.insert('foo', 'bar', { from: primary })
+        assert.equal(await tree.doesInclude('foo'), true)
+        assert.equal(await tree.doesInclude('fuz'), false)
+      })
+    })
+
     describe('getNonInclusionProof()', async () => {
       let items = { key1: 'value1', key2: 'value2', key3: 'value3' }
       it('should return proof data when the key does not exist', async () => {
