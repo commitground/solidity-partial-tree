@@ -142,6 +142,30 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
         assert.equal(web3.toUtf8(await tree.get('foo')), 'bar')
       })
     })
+
+    describe('safeGet()', async () => {
+      it('should return stored value for the given key', async () => {
+        await tree.insert('foo', 'bar', { from: primary })
+        assert.equal(web3.toUtf8(await tree.get('foo')), 'bar')
+      })
+      it('should throw if the given key is not included', async () => {
+        await tree.insert('foo', 'bar', { from: primary })
+        try {
+          await tree.get('fuz')
+          assert.fail('Did not reverted')
+        } catch (e) {
+          assert.ok('Reverted successfully')
+        }
+      })
+    })
+
+    describe('doesInclude()', async () => {
+      it('should return boolean whether the tree includes the given key or not', async () => {
+        await tree.insert('foo', 'bar', { from: primary })
+        assert.equal(await tree.doesInclude('foo'), true)
+        assert.equal(await tree.doesInclude('fuz'), false)
+      })
+    })
   })
 
   context('We can reenact merkle tree transformation by submitting only referred siblings instead of submitting all nodes', async () => {
@@ -166,19 +190,19 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
       siblingsForKey1 = proof[1]
     })
 
-    it('should start with same root hash by initialization', async()=> {
+    it('should start with same root hash by initialization', async () => {
       //initilaze with the first root hash
       await treeB.initialize(firstPhaseOfTreeA)
       assert.equal(await treeB.getRootHash(), firstPhaseOfTreeA)
     })
 
-    it('should not change root after committing branch data', async ()=> {
+    it('should not change root after committing branch data', async () => {
       // commit branch data
       await treeB.commitBranch('key1', referredValueForKey1, branchMaskForKey1, siblingsForKey1)
       assert.equal(await treeB.getRootHash(), firstPhaseOfTreeA)
     })
 
-    it('should be able to return proof data', async ()=> {
+    it('should be able to return proof data', async () => {
       // commit branch data
       await treeB.getProof('key1')
     })
