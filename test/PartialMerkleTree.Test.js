@@ -142,6 +142,71 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
         assert.equal(web3.toUtf8(await tree.get('foo')), 'bar')
       })
     })
+
+    describe('safeGet()', async () => {
+      it('should return stored value for the given key', async () => {
+        await tree.insert('foo', 'bar', { from: primary })
+        assert.equal(web3.toUtf8(await tree.get('foo')), 'bar')
+      })
+      it('should throw if the given key is not included', async () => {
+        await tree.insert('foo', 'bar', { from: primary })
+        try {
+          await tree.get('fuz')
+          assert.fail('Did not reverted')
+        } catch (e) {
+          assert.ok('Reverted successfully')
+        }
+      })
+    })
+
+    describe('doesInclude()', async () => {
+      it('should return boolean whether the tree includes the given key or not', async () => {
+        await tree.insert('foo', 'bar', { from: primary })
+        assert.equal(await tree.doesInclude('foo'), true)
+        assert.equal(await tree.doesInclude('fuz'), false)
+      })
+    })
+
+    describe('getNonInclusionProof()', async () => {
+      let items = { key1: 'value1', key2: 'value2', key3: 'value3' }
+      it('should return proof data when the key does not exist', async () => {
+        for (const key of Object.keys(items)) {
+          await tree.insert(key, items[key], { from: primary })
+        }
+        await tree.getNonInclusionProof('key4')
+      })
+      it('should not return data when the key does exist', async () => {
+        for (const key of Object.keys(items)) {
+          await tree.insert(key, items[key], { from: primary })
+        }
+        try {
+          await tree.getNonInclusionProof('key1')
+          assert.fail('Did not reverted')
+        } catch (e) {
+          assert.ok('Reverted successfully')
+        }
+      })
+    })
+
+    describe('verifyNonInclusionProof()', async () => {
+      it('should be passed when we use correct proof data', async () => {
+        let items = { key1: 'value1', key2: 'value2', key3: 'value3' }
+        for (const key of Object.keys(items)) {
+          await tree.insert(key, items[key], { from: primary })
+        }
+        let rootHash = await tree.getRootHash()
+        let [potentialSiblingLabel, potentialSiblingValue, branchMask, siblings] = await tree.getNonInclusionProof('key4')
+        await tree.verifyNonInclusionProof(rootHash, 'key4', potentialSiblingLabel, potentialSiblingValue, branchMask, siblings)
+        for (const key of Object.keys(items)) {
+          try {
+            await tree.verifyNonInclusionProof(rootHash, key, potentialSiblingLabel, potentialSiblingValue, branchMask, siblings)
+            assert.fail('Did not reverted')
+          } catch (e) {
+            assert.ok('Reverted successfully')
+          }
+        }
+      })
+    })
   })
 
   context('We can reenact merkle tree transformation by submitting only referred siblings instead of submitting all nodes', async () => {
@@ -166,29 +231,54 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
       siblingsForKey1 = proof[1]
     })
 
-    it('should start with same root hash by initialization', async()=> {
+    it('should start with same root hash by initialization', async () => {
       //initilaze with the first root hash
       await treeB.initialize(firstPhaseOfTreeA)
       assert.equal(await treeB.getRootHash(), firstPhaseOfTreeA)
     })
 
-    it('should not change root after committing branch data', async ()=> {
+    it('should not change root after committing branch data', async () => {
       // commit branch data
       await treeB.commitBranch('key1', referredValueForKey1, branchMaskForKey1, siblingsForKey1)
       assert.equal(await treeB.getRootHash(), firstPhaseOfTreeA)
     })
 
-    it('should be able to return proof data', async ()=> {
+    it('should be able to return proof data', async () => {
       // commit branch data
       await treeB.getProof('key1')
     })
 
+    let secondPhaseOfTreeA
+    let secondPhaseOfTreeB
     it('should have same root hash when we update key1', async () => {
       await treeA.insert('key1', 'val4')
       await treeB.insert('key1', 'val4')
-      let secondPhaseOfTreeA = await treeA.getRootHash()
-      let secondPhaseOfTreeB = await treeB.getRootHash()
+      secondPhaseOfTreeA = await treeA.getRootHash()
+      secondPhaseOfTreeB = await treeB.getRootHash()
       assert.equal(secondPhaseOfTreeA, secondPhaseOfTreeB)
+    })
+
+    it('should revert before the branch data of non inclusion is committed', async () => {
+      try {
+        await treeB.insert('key4', 'val4')
+        assert.fail('Did not reverted')
+      } catch (e) {
+        assert.ok('Reverted successfully')
+      }
+    })
+
+    let thirdPhaseOfTreeA
+    let thirdPhaseOfTreeB
+    it('should be able to insert a non inclusion key-value pair after committting related branch data', async () => {
+      let [potentialSiblingLabel, potentialSiblingValue, branchMask, siblings] = await treeA.getNonInclusionProof('key4')
+      await treeB.commitBranchOfNonInclusion('key4', potentialSiblingLabel, potentialSiblingValue, branchMask, siblings)
+      assert.equal(await treeB.getRootHash(), secondPhaseOfTreeB)
+
+      await treeA.insert('key4', 'val4')
+      await treeB.insert('key4', 'val4')
+      thirdPhaseOfTreeA = await treeA.getRootHash()
+      thirdPhaseOfTreeB = await treeB.getRootHash()
+      assert.equal(thirdPhaseOfTreeA, thirdPhaseOfTreeB)
     })
   })
 })
