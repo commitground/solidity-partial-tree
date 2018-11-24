@@ -88,6 +88,18 @@ library PartialMerkleTree {
         return getValue(tree, _findNode(tree, key));
     }
 
+    function safeGet(Tree storage tree, bytes key) internal view returns (bytes value) {
+        bytes32 valueHash = _findNode(tree, key);
+        require(valueHash != bytes32(0));
+        value = getValue(tree, valueHash);
+        require(valueHash == keccak256(value));
+    }
+
+    function doesInclude(Tree storage tree, bytes key) internal view returns (bool) {
+        bytes32 valueHash = _findNode(tree, key);
+        return (valueHash != bytes32(0));
+    }
+
     function getValue(Tree storage tree, bytes32 valueHash) internal view returns (bytes) {
         return tree.values[valueHash];
     }
