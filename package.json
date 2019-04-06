@@ -1,6 +1,6 @@
 {
   "name": "solidity-partial-tree",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "Solidity implementation of partial merkle tree",
   "directories": {
     "test": "test"
