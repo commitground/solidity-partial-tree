@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+pragma solidity >=0.5.0 <0.6.0;
 
 /**
  MIT License
@@ -21,11 +21,11 @@ library D {
         Edge[2] children;
     }
 
-    function isEmpty(Edge edge) internal pure returns (bool) {
+    function isEmpty(Edge memory edge) internal pure returns (bool) {
         return (edge.header == bytes32(0) && edge.node == bytes32(0));
     }
 
-    function hasNode(Edge edge) internal pure returns (bool) {
+    function hasNode(Edge memory edge) internal pure returns (bool) {
         return (edge.node != bytes32(0));
     }
 }

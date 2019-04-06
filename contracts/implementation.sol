@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity >=0.5.0 <0.6.0;
 
 import {PartialMerkleTree} from "./tree.sol";
 
@@ -13,31 +13,31 @@ contract PartialMerkleTreeImplementation {
         tree.initialize(initialRoot);
     }
 
-    function insert(bytes key, bytes value) public {
+    function insert(bytes memory key, bytes memory value) public {
         tree.insert(key, value);
     }
 
-    function commitBranch(bytes key, bytes value, uint branchMask, bytes32[] siblings) public {
+    function commitBranch(bytes memory key, bytes memory value, uint branchMask, bytes32[] memory siblings) public {
         return tree.commitBranch(key, value, branchMask, siblings);
     }
 
-    function commitBranchOfNonInclusion(bytes key, bytes32 potentialSiblingLabel, bytes32 potentialSiblingValue, uint branchMask, bytes32[] siblings) public {
+    function commitBranchOfNonInclusion(bytes memory key, bytes32 potentialSiblingLabel, bytes32 potentialSiblingValue, uint branchMask, bytes32[] memory siblings) public {
         return tree.commitBranchOfNonInclusion(key, potentialSiblingLabel, potentialSiblingValue, branchMask, siblings);
     }
 
-    function get(bytes key) public view returns (bytes) {
+    function get(bytes memory key) public view returns (bytes memory) {
         return tree.get(key);
     }
 
-    function safeGet(bytes key) public view returns (bytes) {
+    function safeGet(bytes memory key) public view returns (bytes memory) {
         return tree.safeGet(key);
     }
 
-    function doesInclude(bytes key) public view returns (bool) {
+    function doesInclude(bytes memory key) public view returns (bool) {
         return tree.doesInclude(key);
     }
 
-    function getValue(bytes32 hash) public view returns (bytes) {
+    function getValue(bytes32 hash) public view returns (bytes memory) {
         return tree.values[hash];
     }
 
@@ -45,24 +45,24 @@ contract PartialMerkleTreeImplementation {
         return tree.getRootHash();
     }
 
-    function getProof(bytes key) public view returns (uint branchMask, bytes32[] _siblings) {
+    function getProof(bytes memory key) public view returns (uint branchMask, bytes32[] memory _siblings) {
         return tree.getProof(key);
     }
 
-    function getNonInclusionProof(bytes key) public view returns (
+    function getNonInclusionProof(bytes memory key) public view returns (
         bytes32 leafLabel,
         bytes32 leafNode,
         uint branchMask,
-        bytes32[] _siblings
+        bytes32[] memory _siblings
     ) {
         return tree.getNonInclusionProof(key);
     }
 
-    function verifyProof(bytes32 rootHash, bytes key, bytes value, uint branchMask, bytes32[] siblings) public pure {
+    function verifyProof(bytes32 rootHash, bytes memory key, bytes memory value, uint branchMask, bytes32[] memory siblings) public pure {
         PartialMerkleTree.verifyProof(rootHash, key, value, branchMask, siblings);
     }
 
-    function verifyNonInclusionProof(bytes32 rootHash, bytes key, bytes32 leafLabel, bytes32 leafNode, uint branchMask, bytes32[] siblings) public pure {
+    function verifyNonInclusionProof(bytes32 rootHash, bytes memory key, bytes32 leafLabel, bytes32 leafNode, uint branchMask, bytes32[] memory siblings) public pure {
         PartialMerkleTree.verifyNonInclusionProof(rootHash, key, leafLabel, leafNode, branchMask, siblings);
     }
 }
