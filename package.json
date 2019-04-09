@@ -8,11 +8,11 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-bignumber": "^2.0.2",
-    "ganache-cli": "^6.1.8",
+    "ganache-cli": "^6.4.2",
     "solidity-coverage": "^0.5.11",
-    "solidity-docgen": "^0.1.0",
+    "solidity-docgen": "^0.1.1",
     "standard": "^12.0.1",
-    "truffle": "^4.1.14",
+    "truffle": "^5.0.12",
     "truffle-hdwallet-provider": "^0.0.5"
   },
   "dependencies": {},

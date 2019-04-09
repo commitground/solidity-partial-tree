@@ -8,6 +8,15 @@ const { toNodeObject, progress } = require('./utils')
 
 const ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
+String.prototype.hex = function() {
+  return web3.utils.stringToHex(this)
+}
+const FOO = 'foo'.hex()
+const BAR = 'bar'.hex()
+const BAZ = 'baz'.hex()
+const QUX = 'quz'.hex()
+const FUZ = 'fuz'.hex()
+
 contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
   context('PartialMerkleTree is also a kind of patricia merkle tree', async () => {
     let tree
@@ -19,28 +28,28 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
         let itemCount = 10
         let items = {}
         for (let i = 0; i < itemCount; i++) {
-          items[web3.sha3('key' + Math.random())] = web3.sha3('val' + Math.random())
+          items[web3.utils.sha3('key' + Math.random())] = web3.utils.sha3('val' + Math.random())
         }
         let count = 1
         for (const key of Object.keys(items)) {
-          await tree.insert(key, items[key], { from: primary })
-          let estimatedGasToAddNewValue = await tree.insert.estimateGas(web3.sha3('key' + Math.random()), web3.sha3('val' + Math.random()), { from: primary })
+          await tree.insert(key.hex(), items[key], { from: primary })
+          let estimatedGasToAddNewValue = await tree.insert.estimateGas(web3.utils.sha3('key' + Math.random()), web3.utils.sha3('val' + Math.random()), { from: primary })
           progress.log(`(${count++}/${itemCount}) Required gas for a transaction: ${estimatedGasToAddNewValue}`)
           assert.isTrue(estimatedGasToAddNewValue < 1000000)
         }
         progress.close()
       })
       it('should allow only primary address to put items', async () => {
-        await tree.insert('foo', 'bar', { from: primary })
+        await tree.insert(FOO, BAR, { from: primary })
       })
       it('should allow overwriting', async () => {
-        await tree.insert('foo', 'bar', { from: primary })
-        await tree.insert('foo', 'baz', { from: primary })
-        assert.equal(web3.toUtf8(await tree.get('foo')), 'baz')
+        await tree.insert(FOO, BAR, { from: primary })
+        await tree.insert(FOO, BAZ, { from: primary })
+        assert.equal(await tree.get(FOO), BAZ)
       })
       it('should revert when a non-primary address tries to insert a new item', async () => {
         try {
-          await tree.insert('foo', 'bar', { from: nonPrimary })
+          await tree.insert(FOO, BAR, { from: nonPrimary })
           assert.fail('it should throw an error')
         } catch (e) {
           assert.ok('it is successfully reverted')
@@ -54,14 +63,14 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
       })
       it('should update its root hash when every new items are put into', async () => {
         // insert an item
-        await tree.insert('foo', 'bar', { from: primary })
+        await tree.insert(FOO, BAR, { from: primary })
         let firstRootHash = await tree.getRootHash()
         // insert an item again
-        await tree.insert('baz', 'qux', { from: primary })
+        await tree.insert(BAZ, QUX, { from: primary })
         let secondRootHash = await tree.getRootHash()
         assert.notEqual(firstRootHash, secondRootHash)
         // insert an item again
-        await tree.insert('foo', 'baz', { from: primary })
+        await tree.insert(FOO, BAZ, { from: primary })
         let thirdRootHash = await tree.getRootHash()
         assert.notEqual(secondRootHash, thirdRootHash)
       })
@@ -69,15 +78,15 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
       it('should return same root hash for same write history', async () => {
         //  define items to put
         let items = {
-          key1: 'val1',
-          key2: 'val2',
-          key3: 'val3'
+          key1: 'val1'.hex(),
+          key2: 'val2'.hex(),
+          key3: 'val3'.hex()
         }
 
         //  insert items into the first tree
         for (const key of Object.keys(items)) {
           progress.log(`Insert items (${key}, ${items[key]})`)
-          await tree.insert(key, items[key], { from: primary })
+          await tree.insert(key.hex(), items[key], { from: primary })
         }
         progress.close()
         // get root hash of the first tree
@@ -88,7 +97,7 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
         // insert same items into the second tree
         for (const key of Object.keys(items)) {
           await progress.log(`Insert items into the second tree (${key}, ${items[key]})`, 500)
-          await secondTree.insert(key, items[key], { from: primary })
+          await secondTree.insert(key.hex(), items[key], { from: primary })
         }
         progress.close()
         // get root hash of the second tree
@@ -101,15 +110,16 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
 
     describe('getProof() & verifyProof()', async () => {
       it('should be able to verify merkle proof for a given key', async () => {
-        let items = { key1: 'value1', key2: 'value2', key3: 'value3' }
+        let items = { key1: 'value1'.hex(), key2: 'value2'.hex(), key3: 'value3'.hex() }
         for (const key of Object.keys(items)) {
-          await tree.insert(key, items[key], { from: primary })
+          await tree.insert(key.hex(), items[key], { from: primary })
         }
         let count = 0
         for (const key of Object.keys(items)) {
-          let [branchMask, siblings] = await tree.getProof(key)
+          let {branchMask, _siblings} = await tree.getProof(key.hex())
+          // let [branchMask, siblings] = await tree.getProof(key.hex())
           let rootHash = await tree.getRootHash()
-          await tree.verifyProof(rootHash, key, items[key], branchMask, siblings)
+          await tree.verifyProof(rootHash, key.hex(), items[key], branchMask, _siblings)
           progress.log(`(${count++}/${Object.keys(items).length}) Merkle proof for ${key}:${items[key]}`)
           assert.ok('is not reverted')
         }
@@ -117,16 +127,16 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
       })
 
       it('should throw an error for an invalid merkle proof', async () => {
-        let items = { key1: 'value1', key2: 'value2', key3: 'value3' }
+        let items = { key1: 'value1'.hex(), key2: 'value2'.hex(), key3: 'value3'.hex() }
         for (const key of Object.keys(items)) {
-          await tree.insert(key, items[key], { from: primary })
+          await tree.insert(key.hex(), items[key], { from: primary })
         }
         let count = 0
         for (const key of Object.keys(items)) {
-          let [branchMask, siblings] = await tree.getProof(key)
+          let {branchMask, _siblings} = await tree.getProof(key.hex())
           let rootHash = await tree.getRootHash()
           try {
-            await tree.verifyProof(rootHash, key, `manipulate${items[key]}`, branchMask, siblings)
+            await tree.verifyProof(rootHash, key.hex(), `manipulate${items[key]}`, branchMask, _siblings)
           } catch (e) {
             progress.log(`(${count++}/${Object.keys(items).length}) fraud proof for ${key}:${items[key]}`)
             assert.ok('reverted')
@@ -138,20 +148,20 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
 
     describe('get()', async () => {
       it('should return stored value for the given key', async () => {
-        await tree.insert('foo', 'bar', { from: primary })
-        assert.equal(web3.toUtf8(await tree.get('foo')), 'bar')
+        await tree.insert(FOO, BAR, { from: primary })
+        assert.equal(await tree.get(FOO), BAR)
       })
     })
 
     describe('safeGet()', async () => {
       it('should return stored value for the given key', async () => {
-        await tree.insert('foo', 'bar', { from: primary })
-        assert.equal(web3.toUtf8(await tree.get('foo')), 'bar')
+        await tree.insert(FOO, BAR, { from: primary })
+        assert.equal(await tree.get(FOO), BAR)
       })
       it('should throw if the given key is not included', async () => {
-        await tree.insert('foo', 'bar', { from: primary })
+        await tree.insert(FOO, BAR, { from: primary })
         try {
-          await tree.get('fuz')
+          await tree.get(FUZ)
           assert.fail('Did not reverted')
         } catch (e) {
           assert.ok('Reverted successfully')
@@ -161,26 +171,26 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
 
     describe('doesInclude()', async () => {
       it('should return boolean whether the tree includes the given key or not', async () => {
-        await tree.insert('foo', 'bar', { from: primary })
-        assert.equal(await tree.doesInclude('foo'), true)
-        assert.equal(await tree.doesInclude('fuz'), false)
+        await tree.insert(FOO, BAR, { from: primary })
+        assert.equal(await tree.doesInclude(FOO), true)
+        assert.equal(await tree.doesInclude(FUZ), false)
       })
     })
 
     describe('getNonInclusionProof()', async () => {
-      let items = { key1: 'value1', key2: 'value2', key3: 'value3' }
+      let items = { key1: 'value1'.hex(), key2: 'value2'.hex(), key3: 'value3'.hex() }
       it('should return proof data when the key does not exist', async () => {
         for (const key of Object.keys(items)) {
-          await tree.insert(key, items[key], { from: primary })
+          await tree.insert(key.hex(), items[key], { from: primary })
         }
-        await tree.getNonInclusionProof('key4')
+        await tree.getNonInclusionProof('key4'.hex())
       })
       it('should not return data when the key does exist', async () => {
         for (const key of Object.keys(items)) {
-          await tree.insert(key, items[key], { from: primary })
+          await tree.insert(key.hex(), items[key], { from: primary })
         }
         try {
-          await tree.getNonInclusionProof('key1')
+          await tree.getNonInclusionProof('key1'.hex())
           assert.fail('Did not reverted')
         } catch (e) {
           assert.ok('Reverted successfully')
@@ -190,16 +200,16 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
 
     describe('verifyNonInclusionProof()', async () => {
       it('should be passed when we use correct proof data', async () => {
-        let items = { key1: 'value1', key2: 'value2', key3: 'value3' }
+        let items = { key1: 'value1'.hex(), key2: 'value2'.hex(), key3: 'value3'.hex() }
         for (const key of Object.keys(items)) {
-          await tree.insert(key, items[key], { from: primary })
+          await tree.insert(key.hex(), items[key], { from: primary })
         }
         let rootHash = await tree.getRootHash()
-        let [potentialSiblingLabel, potentialSiblingValue, branchMask, siblings] = await tree.getNonInclusionProof('key4')
-        await tree.verifyNonInclusionProof(rootHash, 'key4', potentialSiblingLabel, potentialSiblingValue, branchMask, siblings)
+        let {leafLabel, leafNode, branchMask, _siblings} = await tree.getNonInclusionProof('key4'.hex())
+        await tree.verifyNonInclusionProof(rootHash, 'key4'.hex(), leafLabel, leafNode, branchMask, _siblings)
         for (const key of Object.keys(items)) {
           try {
-            await tree.verifyNonInclusionProof(rootHash, key, potentialSiblingLabel, potentialSiblingValue, branchMask, siblings)
+            await tree.verifyNonInclusionProof(rootHash, key, leafLabel, leafNode, branchMask, siblings)
             assert.fail('Did not reverted')
           } catch (e) {
             assert.ok('Reverted successfully')
@@ -220,13 +230,13 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
       treeA = await PartialMerkleTreeImplementation.new()
       treeB = await PartialMerkleTreeImplementation.new()
 
-      await treeA.insert('key1', 'val1')
-      await treeA.insert('key2', 'val2')
-      await treeA.insert('key3', 'val3')
+      await treeA.insert('key1'.hex(), 'val1'.hex())
+      await treeA.insert('key2'.hex(), 'val2'.hex())
+      await treeA.insert('key3'.hex(), 'val3'.hex())
       firstPhaseOfTreeA = await treeA.getRootHash()
-      referredValueForKey1 = await treeA.get('key1')
+      referredValueForKey1 = await treeA.get('key1'.hex())
 
-      let proof = await treeA.getProof('key1')
+      let proof = await treeA.getProof('key1'.hex())
       branchMaskForKey1 = proof[0]
       siblingsForKey1 = proof[1]
     })
@@ -239,20 +249,20 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
 
     it('should not change root after committing branch data', async () => {
       // commit branch data
-      await treeB.commitBranch('key1', referredValueForKey1, branchMaskForKey1, siblingsForKey1)
+      await treeB.commitBranch('key1'.hex(), referredValueForKey1, branchMaskForKey1, siblingsForKey1)
       assert.equal(await treeB.getRootHash(), firstPhaseOfTreeA)
     })
 
     it('should be able to return proof data', async () => {
       // commit branch data
-      await treeB.getProof('key1')
+      await treeB.getProof('key1'.hex())
     })
 
     let secondPhaseOfTreeA
     let secondPhaseOfTreeB
     it('should have same root hash when we update key1', async () => {
-      await treeA.insert('key1', 'val4')
-      await treeB.insert('key1', 'val4')
+      await treeA.insert('key1'.hex(), 'val4'.hex())
+      await treeB.insert('key1'.hex(), 'val4'.hex())
       secondPhaseOfTreeA = await treeA.getRootHash()
       secondPhaseOfTreeB = await treeB.getRootHash()
       assert.equal(secondPhaseOfTreeA, secondPhaseOfTreeB)
@@ -260,7 +270,7 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
 
     it('should revert before the branch data of non inclusion is committed', async () => {
       try {
-        await treeB.insert('key4', 'val4')
+        await treeB.insert('key4'.hex(), 'val4'.hex())
         assert.fail('Did not reverted')
       } catch (e) {
         assert.ok('Reverted successfully')
@@ -270,12 +280,12 @@ contract('PartialMerkleTree', async ([_, primary, nonPrimary]) => {
     let thirdPhaseOfTreeA
     let thirdPhaseOfTreeB
     it('should be able to insert a non inclusion key-value pair after committting related branch data', async () => {
-      let [potentialSiblingLabel, potentialSiblingValue, branchMask, siblings] = await treeA.getNonInclusionProof('key4')
-      await treeB.commitBranchOfNonInclusion('key4', potentialSiblingLabel, potentialSiblingValue, branchMask, siblings)
+      let {leafLabel, leafNode, branchMask, _siblings} = await treeA.getNonInclusionProof('key4'.hex())
+      await treeB.commitBranchOfNonInclusion('key4'.hex(), leafLabel, leafNode, branchMask, _siblings)
       assert.equal(await treeB.getRootHash(), secondPhaseOfTreeB)
 
-      await treeA.insert('key4', 'val4')
-      await treeB.insert('key4', 'val4')
+      await treeA.insert('key4'.hex(), 'val4'.hex())
+      await treeB.insert('key4'.hex(), 'val4'.hex())
       thirdPhaseOfTreeA = await treeA.getRootHash()
       thirdPhaseOfTreeB = await treeB.getRootHash()
       assert.equal(thirdPhaseOfTreeA, thirdPhaseOfTreeB)
